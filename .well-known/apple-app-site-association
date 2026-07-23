@@ -1,0 +1,15 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["TEAMID.xyz.hydrus.cocktail"],
+        "components": [
+          { "/": "/d/*", "comment": "Shared drink recipe: opens the Martini app if installed" }
+        ]
+      }
+    ]
+  },
+  "appclips": {
+    "apps": ["TEAMID.xyz.hydrus.cocktail.Clip"]
+  }
+}
