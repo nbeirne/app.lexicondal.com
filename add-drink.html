@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Martini — Shared Recipe</title>
+  <meta name="theme-color" content="#f9f9f9" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#292c61" media="(prefers-color-scheme: dark)" />
+
+  <!-- App Clip card + Smart App Banner. On iOS this URL (backed by the app's
+       Associated Domains + /.well-known/apple-app-site-association) launches the
+       Martini App Clip; this page is the web-renderer fallback for everyone
+       else. So a QR of this URL opens the App Clip or falls back to the render
+       below. -->
+  <meta name="apple-itunes-app"
+        content="app-clip-bundle-id=xyz.hydrus.cocktail.Clip, app-id=1570003820" />
+
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+  <style>
+    /* Palette ported from Martini's ThemeCatalog (Light + Dark). Each colour is
+       an sRGB fallback then a Display-P3 value for wide-gamut screens. */
+    :root {
+      --title: rgb(9,9,9); --title: color(display-p3 .0353 .0353 .0353);
+      --accent-title: rgb(198,42,28); --accent-title: color(display-p3 .7764 .1633 .1105);
+      --text-primary: rgb(9,9,9); --text-primary: color(display-p3 .0353 .0353 .0353);
+      --text-secondary: rgb(134,133,185); --text-secondary: color(display-p3 .525 .52 .725);
+      --text-accent: rgb(50,115,140); --text-accent: color(display-p3 .1952 .4518 .5499);
+      --background: rgb(249,249,249); --background: color(display-p3 .9765 .9765 .9765);
+      --border-hard: rgb(9,9,9); --border-hard: color(display-p3 .0353 .0353 .0353);
+      --wash: rgba(41,44,97,.14);
+      --card-surface: #ffffff;
+      --divider: rgba(9,9,9,.9);
+
+      --accent-blue: rgb(50,115,140); --accent-blue: color(display-p3 .1952 .4518 .5499);
+      --accent-brown: rgb(68,35,0); --accent-brown: color(display-p3 .267 .136 0);
+      --accent-cream: rgb(170,139,107); --accent-cream: color(display-p3 .667 .545 .42);
+      --accent-green: rgb(90,197,66); --accent-green: color(display-p3 .354 .773 .26);
+      --accent-orange: rgb(223,130,2); --accent-orange: color(display-p3 .873 .511 .006);
+      --accent-purple: rgb(174,41,185); --accent-purple: color(display-p3 .681 .159 .726);
+      --accent-red: rgb(198,42,28); --accent-red: color(display-p3 .7764 .1633 .1105);
+      --accent-white: rgb(203,203,203); --accent-white: color(display-p3 .797 .797 .797);
+      --accent-yellow: rgb(246,201,68); --accent-yellow: color(display-p3 .9657 .7886 .268);
+
+      --stroke: var(--border-hard);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --title: rgb(255,255,255); --title: color(display-p3 1 1 1);
+        --accent-title: rgb(255,255,255); --accent-title: color(display-p3 1 1 1);
+        --text-primary: rgb(255,255,255); --text-primary: color(display-p3 1 1 1);
+        --text-secondary: rgb(200,197,197); --text-secondary: color(display-p3 .7855 .7731 .7728);
+        --text-accent: rgb(246,201,68); --text-accent: color(display-p3 .9657 .7886 .268);
+        --background: rgb(41,44,97); --background: color(display-p3 .1598 .172 .3821);
+        --border-hard: rgb(255,255,255); --border-hard: color(display-p3 1 1 1);
+        --wash: rgba(255,255,255,.10);
+        --card-surface: #33375c;
+        --divider: rgba(255,255,255,1);
+
+        --accent-blue: rgb(85,186,226); --accent-blue: color(display-p3 .3324 .7299 .8847);
+        --accent-brown: rgb(97,60,32); --accent-brown: color(display-p3 .379 .235 .124);
+        --accent-cream: rgb(220,171,105); --accent-cream: color(display-p3 .861 .67 .41);
+        --accent-orange: rgb(255,149,0); --accent-orange: color(display-p3 1 .585 0);
+        --accent-red: rgb(237,115,103); --accent-red: color(display-p3 .9297 .4491 .4043);
+        --accent-white: rgb(255,255,255); --accent-white: color(display-p3 1 1 1);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background:
+        radial-gradient(120% 60% at 50% 0%, var(--wash), transparent 60%),
+        var(--background);
+      background-attachment: fixed;
+      min-height: 100vh;
+      color: var(--text-primary);
+      font-family: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: max(14px, env(safe-area-inset-top)) 16px 6px;
+      max-width: 620px; margin: 0 auto;
+    }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      font: 600 15px/1 "Open Sans", -apple-system, system-ui, sans-serif;
+      text-decoration: none; color: var(--text-accent);
+      background: color-mix(in srgb, var(--text-primary) 6%, transparent);
+      padding: 10px 16px; border-radius: 999px; border: 0; cursor: pointer;
+    }
+    .pill.primary {
+      color: var(--background);
+      background: var(--text-accent);
+    }
+    .pill.ghost { background: transparent; }
+
+    main { max-width: 620px; margin: 0 auto; padding: 8px 24px 48px; }
+
+    .recipe-summary { display: flex; flex-direction: column; align-items: center; gap: 22px; }
+
+    .hero-card {
+      width: min(64%, 260px); aspect-ratio: 1; margin: 12px 0 2px;
+      border-radius: 22%;
+      background: color-mix(in srgb, var(--tint, var(--accent-blue)) 13%, var(--card-surface));
+      box-shadow: 0 10px 30px rgba(0,0,0,.14), 0 2px 6px rgba(0,0,0,.08);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .glass-svg { width: 74%; height: 74%; display: block; overflow: visible; }
+
+    .title-wrap { text-align: center; display: flex; flex-direction: column; gap: 4px; }
+    .drink-name {
+      margin: 0; font-weight: 500; font-size: 34px; line-height: 1.1;
+      letter-spacing: .5px; color: var(--accent-title);
+      font-family: "Futura", "Century Gothic", "Avenir Next", system-ui, sans-serif;
+    }
+    .subtitle {
+      color: var(--text-secondary); font-size: 17px; letter-spacing: .3px;
+      font-family: "Alata", "Futura", system-ui, sans-serif;
+    }
+
+    .ingredients { width: 100%; display: flex; flex-direction: column; gap: 9px; }
+    .ingredient-row {
+      display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+      font-size: 19px;
+    }
+    .ingredient-left { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+    .measure {
+      display: inline-flex; gap: 5px; flex: 0 0 auto;
+      min-width: 4.4em; color: var(--text-primary);
+    }
+    .measure .amount { font-variant-numeric: tabular-nums; }
+    .measure .unit { color: var(--text-primary); }
+    .label { color: var(--text-primary); }
+    .attribute {
+      color: var(--text-secondary); font-style: italic; font-size: 16px;
+      flex: 0 0 auto; white-space: nowrap;
+    }
+    .alt-row { opacity: .72; font-size: 17px; }
+    .alt-row .measure { min-width: 4.4em; }
+
+    .hard-divider {
+      width: 100%; height: 0; border: none; border-top: 1.5px solid var(--divider);
+      margin: 2px 0; opacity: .9;
+    }
+    .directions { width: 100%; }
+    .directions-title {
+      margin: 0 0 10px; font-weight: 500; font-size: 24px; color: var(--text-primary);
+      font-family: "Futura", "Century Gothic", "Avenir Next", system-ui, sans-serif;
+    }
+    .steps { margin: 0; padding: 0; list-style: none; counter-reset: step; }
+    .step {
+      display: flex; gap: 12px; margin-bottom: 16px; font-size: 19px; line-height: 1.45;
+    }
+    .step::before {
+      counter-increment: step; content: counter(step);
+      color: var(--text-accent); font-weight: 700; flex: 0 0 auto; min-width: 1ch;
+    }
+
+    .error-box { text-align: center; padding: 48px 12px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .error-glass { font-size: 64px; }
+    .error-title { margin: 8px 0 0; font-size: 24px; color: var(--accent-title);
+      font-family: "Futura", "Century Gothic", "Avenir Next", system-ui, sans-serif; font-weight: 500; }
+    .error-msg { margin: 0; color: var(--text-secondary); max-width: 34ch; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a class="pill ghost" href="/">&larr; Martini</a>
+    <a class="pill primary" id="open-app" href="#">Open in Martini</a>
+  </div>
+  <main><div id="app"></div></main>
+
+  <script>(()=>{var t=typeof t<"u"?t:{},y={},p;for(p in t)t.hasOwnProperty(p)&&(y[p]=t[p]);var K=[],v=t.printErr||console.warn.bind(console);for(p in y)y.hasOwnProperty(p)&&(t[p]=y[p]);var C=(e,r)=>{throw r};y=null;t.arguments&&(K=t.arguments);t.thisProgram&&(thisProgram=t.thisProgram);t.quit&&(C=t.quit);typeof WebAssembly!="object"&&E("no native wasm support detected");var S,x=!1,b;var A,V;function L(){var e=S.buffer;t.HEAP8=V=new Int8Array(e),t.HEAPU8=A=new Uint8Array(e)}var z=[],I=[],M=[],X=!1;function Q(){if(t.preRun)for(typeof t.preRun=="function"&&(t.preRun=[t.preRun]);t.preRun.length;)ee(t.preRun.shift());R(z)}function Y(){X=!0,R(I)}function G(){if(t.postRun)for(typeof t.postRun=="function"&&(t.postRun=[t.postRun]);t.postRun.length;)re(t.postRun.shift());R(M)}function ee(e){z.unshift(e)}function te(e){I.unshift(e)}function re(e){M.unshift(e)}var d=0,g=null;function ne(e){var r;d++,(r=t.monitorRunDependencies)===null||r===void 0||r.call(t,d)}function oe(e){var r;if(d--,(r=t.monitorRunDependencies)===null||r===void 0||r.call(t,d),d==0&&g){var n=g;g=null,n()}}function E(e){var r;(r=t.onAbort)===null||r===void 0||r.call(t,e),e="Aborted("+e+")",v(e),x=!0,e+=". Build with -sASSERTIONS for more info.";var n=new WebAssembly.RuntimeError(e);throw n}function ie(){return{a:De}}function se(e){return fetch(e,{credentials:"same-origin"}).then(function(r){if(!r.ok)throw"failed to load wasm binary file at '"+e+"'";return r.arrayBuffer()})}function ae(e){var r=ie();function n(c,f){return m=c.exports,S=m.f,L(),te(m.g),oe("wasm-instantiate"),m}ne("wasm-instantiate");function o(c){n(c.instance)}function a(c){return se(e).then(function(f){var _=WebAssembly.instantiate(f,r);return _}).then(c,function(f){v("failed to asynchronously prepare wasm: "+f),E(f)})}function i(){return e&&e.byteLength>0?WebAssembly.instantiate(e,r).then(o,function(c){v("wasm compile failed: "+c)}):typeof WebAssembly.instantiateStreaming=="function"&&typeof e=="string"&&typeof fetch=="function"?fetch(e,{credentials:"same-origin"}).then(function(c){var f=WebAssembly.instantiateStreaming(c,r);return f.then(o,function(_){return v("wasm streaming compile failed: "+_),v("falling back to ArrayBuffer instantiation"),a(o)})}):a(o)}if(t.instantiateWasm)try{var s=t.instantiateWasm(r,n);return s}catch(c){return v("Module.instantiateWasm callback failed with error: "+c),!1}return i(),{}}var T=class{constructor(r){this.name="ExitStatus",this.message=`Program terminated with exit(${r})`,this.status=r}},R=e=>{for(;e.length>0;)e.shift()(t)},U=t.noExitRuntime||!0,ce=()=>E(""),H=0,ue=()=>{U=!1,H=0},h={},P=e=>{if(e instanceof T||e=="unwind")return b;C(1,e)},F=()=>U||H>0,W=e=>{var r;b=e,F()||((r=t.onExit)===null||r===void 0||r.call(t,e),x=!0),C(e,new T(e))},_e=(e,r)=>{b=e,W(e)},me=_e,fe=()=>{if(!F())try{me(b)}catch(e){P(e)}},le=e=>{if(!x)try{e(),fe()}catch(r){P(r)}},pe=()=>performance.now(),de=(e,r)=>{if(h[e]&&(clearTimeout(h[e].id),delete h[e]),!r)return 0;var n=setTimeout(()=>{delete h[e],le(()=>k(e,pe()))},r);return h[e]={id:n,timeout_ms:r},0},ve=()=>2147483648,he=(e,r)=>Math.ceil(e/r)*r,ye=e=>{var r=S.buffer,n=(e-r.byteLength+65535)/65536|0;try{return S.grow(n),L(),1}catch{}},ge=e=>{var r=A.length;e>>>=0;var n=ve();if(e>n)return!1;for(var o=1;o<=4;o*=2){var a=r*(1+.2/o);a=Math.min(a,e+100663296);var i=Math.min(n,he(Math.max(e,a),65536)),s=ye(i);if(s)return!0}return!1},De={c:ce,b:ue,d:de,e:ge,a:W},m;var Se=t._ZSTD_isError=e=>(Se=t._ZSTD_isError=m.h)(e),Te=t._ZSTD_compressBound=e=>(Te=t._ZSTD_compressBound=m.i)(e),we=t._ZSTD_createCCtx=()=>(we=t._ZSTD_createCCtx=m.j)(),xe=t._ZSTD_freeCCtx=e=>(xe=t._ZSTD_freeCCtx=m.k)(e),be=t._ZSTD_compress_usingDict=(e,r,n,o,a,i,s,c)=>(be=t._ZSTD_compress_usingDict=m.l)(e,r,n,o,a,i,s,c),Ze=t._ZSTD_compress=(e,r,n,o,a)=>(Ze=t._ZSTD_compress=m.m)(e,r,n,o,a),Ce=t._ZSTD_createDCtx=()=>(Ce=t._ZSTD_createDCtx=m.n)(),Ee=t._ZSTD_freeDCtx=e=>(Ee=t._ZSTD_freeDCtx=m.o)(e),Re=t._ZSTD_getFrameContentSize=(e,r)=>(Re=t._ZSTD_getFrameContentSize=m.p)(e,r),Ae=t._ZSTD_decompress_usingDict=(e,r,n,o,a,i,s)=>(Ae=t._ZSTD_decompress_usingDict=m.q)(e,r,n,o,a,i,s),Le=t._ZSTD_decompress=(e,r,n,o)=>(Le=t._ZSTD_decompress=m.r)(e,r,n,o),ze=t._malloc=e=>(ze=t._malloc=m.s)(e),Ie=t._free=e=>(Ie=t._free=m.t)(e),k=(e,r)=>(k=m.v)(e,r),w;g=function e(){w||B(),w||(g=e)};function B(){if(d>0||(Q(),d>0))return;function e(){var r;w||(w=!0,t.calledRun=!0,!x&&(Y(),(r=t.onRuntimeInitialized)===null||r===void 0||r.call(t),G()))}t.setStatus?(t.setStatus("Running..."),setTimeout(()=>{setTimeout(()=>t.setStatus(""),1),e()},1)):e()}t.run=B;if(t.preInit)for(typeof t.preInit=="function"&&(t.preInit=[t.preInit]);t.preInit.length>0;)t.preInit.pop()();t.init=ae;var Me=function(e,r,n,o){function a(i){return i instanceof n?i:new n(function(s){s(i)})}return new(n||(n=Promise))(function(i,s){function c(u){try{_(o.next(u))}catch(l){s(l)}}function f(u){try{_(o.throw(u))}catch(l){s(l)}}function _(u){u.done?i(u.value):a(u.value).then(c,f)}_((o=o.apply(e,r||[])).next())})},Ue=new Promise(e=>{t.onRuntimeInitialized=e}),O=()=>Me(void 0,void 0,void 0,function*(){yield Ue});var D=e=>{let r=t._ZSTD_isError;return r(e)};var He=(e,r)=>{let n=t._ZSTD_getFrameContentSize;return n(e,r)},$=()=>t._ZSTD_createDCtx(),j=e=>t._ZSTD_freeDCtx(e),N=(e,r,n,o={defaultHeapSize:1024*1024})=>{let a=t._malloc,i=a(r.byteLength);t.HEAP8.set(r,i);let s=a(n.byteLength);t.HEAP8.set(n,s);let c=He(i,r.byteLength),f=c===-1?o.defaultHeapSize:c,_=t._free,u=a(f);try{let l=t._ZSTD_decompress_usingDict,Z=l(e,u,f,i,r.byteLength,s,n.byteLength);if(D(Z))throw new Error(`Failed to compress with code ${Z}`);let J=new Uint8Array(t.HEAPU8.buffer,u,Z).slice();return _(u,f),_(i,r.byteLength),_(s,n.byteLength),J}catch(l){throw _(u,f),_(i,r.byteLength),_(s,n.byteLength),l}};var Pe=function(e,r,n,o){function a(i){return i instanceof n?i:new n(function(s){s(i)})}return new(n||(n=Promise))(function(i,s){function c(u){try{_(o.next(u))}catch(l){s(l)}}function f(u){try{_(o.throw(u))}catch(l){s(l)}}function _(u){u.done?i(u.value):a(u.value).then(c,f)}_((o=o.apply(e,r||[])).next())})},q=e=>Pe(void 0,void 0,void 0,function*(){let r=new URL("./zstd.wasm","https://local/").href;t.init(e??r),yield O()});window.MartiniZstd={init:q,decompressUsingDict:N,createDCtx:$,freeDCtx:j};})();
+</script>
+  <script>// Martini shared-recipe decoder + view.
+//
+// Decodes the payload a Martini QR code carries — `?d=<token>` where token is
+// the base64url DrinkArchive: [formatVersion=3][dictVersion=3] + zstd(dict) of
+// the packed TLV recipe — and renders it in the app's recipe-summary style.
+//
+// The wire format mirrors MartiniCore's DrinkTLVCodec / DrinkArchive. Keep the
+// tables and bit layout below in lockstep with that Swift source.
+
+(function () {
+  "use strict";
+
+  // ---- Format constants (must match MartiniCore) ----
+  const FORMAT_VERSION = 3;
+  const DICT_VERSION = 3;
+  const ESCAPE = 0xff;
+
+  const UNITS = [
+    "", "oz", "dash", "tsp", "tbsp", "ml", "cl", "drop",
+    "splash", "part", "barspoon", "slice", "wedge", "leaf", "cube", "twist"
+  ];
+
+  const GLASS = ["highball", "rocks", "martini", "coupe", "margarita",
+    "hurricane", "champagne_flute", "white_wine"];
+
+  const TRANSFORM = ["inset", "offset_right", "offset_left"];
+
+  // ThemeSlot.allCases order — index of the 1-byte colour field.
+  const THEME = ["title", "accentTitle", "textPrimary", "textSecondary",
+    "textActive", "textAccent", "background", "backgroundSecondary", "borderHard",
+    "borderSoft", "activeElementText", "activeElementBackground", "activeElementBorder",
+    "inactiveElementText", "inactiveElementBackground", "blue", "brown", "cream",
+    "green", "orange", "purple", "red", "white", "yellow", "pageWash"];
+  const ACCENTS = new Set(["blue", "brown", "cream", "green", "orange", "purple",
+    "red", "white", "yellow"]);
+
+  const MEASURE_CB = [
+    0x0810, 0x0804, 0x0210, 0x0814, 0x0820, 0x0806, 0x0830, 0x0000, 0x0920, 0x0200, 0x0840, 0x0020,
+    0x0030, 0x0802, 0x0010, 0x0914, 0x1010, 0x1810, 0x1910, 0x1410, 0x0906, 0x0204, 0x4000, 0x0040,
+    0x0430, 0x0004, 0x0002, 0x0050, 0x1820, 0x0904, 0x1030, 0x0940, 0x0824, 0x0230, 0x0c06, 0x0220,
+    0x0100, 0x0410, 0x0930, 0x0812, 0x1020
+  ];
+
+  const NAME_CB = [
+    "lemon juice", "gin", "vodka", "lime juice", "simple syrup", "orange liqueur",
+    "white rum", "cognac", "orange juice", "orange slice", "lemon peel", "grenadine",
+    "maraschino cherry", "rye", "bourbon", "Angostura bitters", "maraschino", "soda water",
+    "whiskey", "lime wedge", "pineapple juice", "egg white", "sweet vermouth", "orange bitters",
+    "absinthe", "mint leaf", "champagne", "prosecco", "cream", "orange peel",
+    "dry vermouth", "dark rum", "tequila", "Galliano", "Campari", "sugar",
+    "pineapple wedge", "cranberry juice", "grapefruit juice", "lemon slice", "coffee liqueur", "Aperol",
+    "amaretto", "crème de cassis", "Lillet Blanc", "lemon strip", "orange wedge", "lime wheel",
+    "cola", "ground nutmeg", "crème de violet", "orgeat syrup", "ginger beer", "olive",
+    "lemon wedge", "crème de menthe", "crème de cacao", "maple syrup", "brandy", "ginger ale",
+    "pisco", "red port", "egg yolk", "espresso", "coffee bean", "coconut milk",
+    "lime peel", "blackberry liqueur", "blackberry", "raspberry liqueur", "tomato juice", "Worcestershire sauce",
+    "hot sauce", "horseradish", "pepper", "celery", "orange curaçao", "peach schnapps",
+    "Peychaud's bitters", "lemon", "Benedictine", "lime slice", "lemon wheel", "apricot brandy",
+    "olive brine", "Amaro Nonino", "orange flower water", "scotch", "honey syrup", "islay scotch",
+    "peach", "peach slice", "white wine", "grapefuit slice", "Green Chartreuse", "grapefruit",
+    "coffee", "lime", "pineapple", "orange", "egg", "mint",
+    "nutmeg", "vanilla extract", "lime strip", "orange strip", "orange wheel", "mezcal",
+    "blanco tequila", "reposado tequila", "añejo tequila", "spiced rum", "aged rum", "overproof rum",
+    "rhum agricole", "cachaça", "Irish whiskey", "Japanese whisky", "genever", "Old Tom gin",
+    "London dry gin", "aquavit", "grappa", "calvados", "applejack", "armagnac",
+    "soju", "Yellow Chartreuse", "Cointreau", "triple sec", "Grand Marnier", "Drambuie",
+    "Chambord", "Frangelico", "Kahlúa", "Irish cream", "St-Germain", "Fernet-Branca",
+    "Cynar", "Averna", "Amaro Montenegro", "amaro", "falernum", "allspice dram",
+    "melon liqueur", "blue curaçao", "crème de banane", "Cherry Heering", "limoncello", "sambuca",
+    "ouzo", "pastis", "Southern Comfort", "Pimm's No. 1", "Suze", "sloe gin",
+    "Cocchi Americano", "Lillet Rouge", "Dubonnet", "red wine", "rosé wine", "sparkling wine",
+    "sake", "sherry", "fino sherry", "amontillado sherry", "oloroso sherry", "Pedro Ximénez sherry",
+    "Madeira", "Marsala", "tawny port", "ruby port", "white port", "blanc vermouth",
+    "Punt e Mes", "tonic water", "club soda", "passion fruit juice", "apple juice", "pomegranate juice",
+    "mango juice", "lemon-lime soda", "grapefruit soda", "milk", "half-and-half", "coconut cream",
+    "demerara syrup", "agave syrup", "gomme syrup", "cinnamon syrup", "ginger syrup", "vanilla syrup",
+    "raspberry syrup", "passion fruit syrup", "chocolate bitters", "celery bitters", "mole bitters", "grapefruit bitters",
+    "cardamom bitters", "saline solution", "salt", "cinnamon", "star anise", "cloves",
+    "allspice", "cucumber", "basil", "rosemary", "thyme", "sage",
+    "jalapeño", "ginger", "strawberry", "raspberry", "blueberry", "cranberry",
+    "apple", "pear", "banana", "coconut", "watermelon", "passion fruit",
+    "mango", "pomegranate", "cocktail cherry", "edible flower", "chocolate", "whipped cream",
+    "aquafaba", "cinnamon stick", "lemon twist", "lime twist", "orange twist", "grapefruit twist"
+  ];
+
+  // ---- base64url ----
+  function bytesFromB64(s) {
+    const bin = atob(s);
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  function bytesFromB64url(s) {
+    s = s.replace(/-/g, "+").replace(/_/g, "/");
+    while (s.length % 4) s += "=";
+    return bytesFromB64(s);
+  }
+
+  // ---- TLV cursor ----
+  const utf8 = new TextDecoder("utf-8");
+  function Cursor(data) { this.data = data; this.i = 0; }
+  Cursor.prototype.byte = function () {
+    if (this.i >= this.data.length) throw new Error("truncated");
+    return this.data[this.i++];
+  };
+  Cursor.prototype.varint = function () {
+    let result = 0, shift = 0;
+    for (;;) {
+      const b = this.byte();
+      result |= (b & 0x7f) << shift;
+      if ((b & 0x80) === 0) return result >>> 0;
+      shift += 7;
+      if (shift > 35) throw new Error("corrupt varint");
+    }
+  };
+  Cursor.prototype.cString = function () {
+    const start = this.i;
+    while (this.i < this.data.length && this.data[this.i] !== 0) this.i++;
+    if (this.i >= this.data.length) throw new Error("truncated string");
+    const s = utf8.decode(this.data.subarray(start, this.i));
+    this.i++; // consume terminator
+    return s;
+  };
+
+  const QUARTERS = [0.0, 0.25, 0.5, 0.75];
+
+  function decodeTLV(data) {
+    const c = new Cursor(data);
+    const packed = c.byte();
+    const glass = GLASS[(packed >> 3) & 0xf] || "rocks";
+    const transform = TRANSFORM[packed & 0x7] || "inset";
+    const colorSlot = THEME[c.byte()];
+    const liquidColor = ACCENTS.has(colorSlot) ? colorSlot : "blue";
+
+    const name = c.cString();
+    const directions = c.cString();
+
+    const count = c.varint();
+    const bases = [];
+    for (let n = 0; n < count; n++) {
+      const measureByte = c.byte();
+      let header;
+      if (measureByte === ESCAPE) {
+        header = (c.byte() << 8) | c.byte();
+      } else {
+        if (measureByte >= MEASURE_CB.length) throw new Error("corrupt measure");
+        header = MEASURE_CB[measureByte];
+      }
+      const nameByte = c.byte();
+      let iname;
+      if (nameByte === ESCAPE) {
+        iname = c.cString();
+      } else {
+        if (nameByte >= NAME_CB.length) throw new Error("corrupt name");
+        iname = NAME_CB[nameByte];
+      }
+
+      const unit = UNITS[(header >> 11) & 0x1f] || "";
+      const fracBits = (header >> 1) & 0x7;
+      const amount = ((header >> 4) & 0xf) + (fracBits < 4 ? QUARTERS[fracBits] : 0);
+      const ing = {
+        name: iname,
+        amount: amount,
+        unit: unit || null,
+        optional: ((header >> 10) & 1) === 1,
+        garnish: ((header >> 9) & 1) === 1,
+        alts: [],
+      };
+      const isAlt = ((header >> 8) & 1) === 1;
+      if (isAlt && bases.length) bases[bases.length - 1].alts.push(ing);
+      else bases.push(ing);
+    }
+
+    return { name, directions, glass, transform, liquidColor, components: bases };
+  }
+
+  // ---- amount → fraction string (quarter steps) ----
+  const FRAC = { 0.25: "¼", 0.5: "½", 0.75: "¾" };
+  function amountString(amount) {
+    if (amount == null || amount === 0) return null;
+    const whole = Math.floor(amount + 1e-9);
+    const frac = Math.round((amount - whole) / 0.25) * 0.25;
+    const parts = [];
+    if (whole > 0) parts.push(String(whole));
+    if (frac > 0 && FRAC[frac]) parts.push(FRAC[frac]);
+    if (parts.length === 0) return String(amount);
+    return parts.join(" ");
+  }
+
+  // ---- Glass line-art. viewBox 0 0 100 100; returns {outline, clip, fill}. ----
+  // `outline` = stroked paths (the glass); `clip` = interior region for the
+  // liquid; `fill` (0..1) = how full the interior is drawn.
+  function ellipse(cx, cy, rx, ry) {
+    return `M ${cx - rx} ${cy} a ${rx} ${ry} 0 1 0 ${rx * 2} 0 a ${rx} ${ry} 0 1 0 ${-rx * 2} 0 Z`;
+  }
+  function arcBottom(cx, cy, rx, ry) { // lower half only (front of a base/bottom)
+    return `M ${cx - rx} ${cy} a ${rx} ${ry} 0 0 0 ${rx * 2} 0`;
+  }
+
+  const GLASSES = {
+    // Open cylinders: rim ellipse, two walls, front bottom curve.
+    cylinder: function (topRx, botRx, topY, botY, rimRy) {
+      const cx = 50;
+      const lT = cx - topRx, rT = cx + topRx, lB = cx - botRx, rB = cx + botRx;
+      return {
+        outline: [
+          ellipse(cx, topY, topRx, rimRy),
+          `M ${lT} ${topY} L ${lB} ${botY}`,
+          `M ${rT} ${topY} L ${rB} ${botY}`,
+          arcBottom(cx, botY, botRx, rimRy),
+        ],
+        clip: `M ${lT} ${topY} L ${lB} ${botY} ` +
+          `a ${botRx} ${rimRy} 0 0 0 ${botRx * 2} 0 L ${rT} ${topY} ` +
+          `a ${topRx} ${rimRy} 0 0 1 ${-topRx * 2} 0 Z`,
+        top: topY, bottom: botY, rimRy: rimRy,
+        topRx: topRx, botRx: botRx,
+      };
+    },
+    // Stemmed glasses: a bowl (interior clip), a stem line, an oval foot.
+    stem: function (bowlOutline, bowlClip, bowlTopY, bowlBotY, bowlTopRx) {
+      const cx = 50, footY = 92, stemTop = bowlBotY;
+      return {
+        outline: bowlOutline.concat([
+          `M ${cx} ${stemTop} L ${cx} ${footY - 2}`,
+          ellipse(cx, footY, 15, 3),
+        ]),
+        clip: bowlClip,
+        top: bowlTopY, bottom: bowlBotY, rimRy: 5, topRx: bowlTopRx, botRx: 4,
+      };
+    },
+  };
+
+  function glassGeometry(kind) {
+    switch (kind) {
+      case "rocks":
+        return Object.assign(GLASSES.cylinder(32, 30, 26, 80, 6), { fill: 0.72 });
+      case "highball":
+        return Object.assign(GLASSES.cylinder(21, 20, 14, 86, 5), { fill: 0.76 });
+      case "martini": {
+        const cx = 50, topY = 18, bowlBot = 56, rx = 34, ry = 5.5;
+        return Object.assign(GLASSES.stem(
+          [ellipse(cx, topY, rx, ry),
+          `M ${cx - rx} ${topY} L ${cx} ${bowlBot} L ${cx + rx} ${topY}`],
+          `M ${cx - rx} ${topY} a ${rx} ${ry} 0 0 0 ${rx * 2} 0 L ${cx} ${bowlBot} Z`,
+          topY, bowlBot, rx), { fill: 0.82 });
+      }
+      case "coupe": {
+        const cx = 50, topY = 26, bowlBot = 52, rx = 32, ry = 6;
+        return Object.assign(GLASSES.stem(
+          [ellipse(cx, topY, rx, ry),
+          `M ${cx - rx} ${topY} Q ${cx} ${bowlBot + 20} ${cx + rx} ${topY}`],
+          `M ${cx - rx} ${topY} a ${rx} ${ry} 0 0 0 ${rx * 2} 0 Q ${cx} ${bowlBot + 18} ${cx - rx} ${topY} Z`,
+          topY, bowlBot, rx), { fill: 0.7 });
+      }
+      case "margarita": {
+        const cx = 50, topY = 20, ry = 5.5, rx = 36;
+        return Object.assign(GLASSES.stem(
+          [ellipse(cx, topY, rx, ry),
+          `M ${cx - rx} ${topY} L ${cx - 9} ${44} Q ${cx} ${46} ${cx} ${52} ` +
+          `Q ${cx} ${46} ${cx + 9} ${44} L ${cx + rx} ${topY}`],
+          `M ${cx - rx} ${topY} a ${rx} ${ry} 0 0 0 ${rx * 2} 0 L ${cx + 9} ${44} ` +
+          `Q ${cx} ${46} ${cx} ${52} Q ${cx} ${46} ${cx - 9} ${44} Z`,
+          topY, 52, rx), { fill: 0.34 });
+      }
+      case "hurricane": {
+        const cx = 50, topY = 16, bot = 62, rx = 24, ry = 5;
+        const bowl = [
+          ellipse(cx, topY, rx, ry),
+          `M ${cx - rx} ${topY} C ${cx - 34} ${34} ${cx - 12} ${44} ${cx - 14} ${bot}`,
+          `M ${cx + rx} ${topY} C ${cx + 34} ${34} ${cx + 12} ${44} ${cx + 14} ${bot}`,
+        ];
+        const clip = `M ${cx - rx} ${topY} a ${rx} ${ry} 0 0 0 ${rx * 2} 0 ` +
+          `C ${cx + 34} ${34} ${cx + 12} ${44} ${cx + 14} ${bot} L ${cx - 14} ${bot} ` +
+          `C ${cx - 12} ${44} ${cx - 34} ${34} ${cx - rx} ${topY} Z`;
+        return Object.assign(GLASSES.stem(bowl, clip, topY, bot, rx), { fill: 0.8 });
+      }
+      case "champagne_flute": {
+        const cx = 50, topY = 12, bot = 60, rx = 12, ry = 4;
+        const bowl = [
+          ellipse(cx, topY, rx, ry),
+          `M ${cx - rx} ${topY} C ${cx - rx} ${40} ${cx - 4} ${48} ${cx - 4} ${bot}`,
+          `M ${cx + rx} ${topY} C ${cx + rx} ${40} ${cx + 4} ${48} ${cx + 4} ${bot}`,
+        ];
+        const clip = `M ${cx - rx} ${topY} a ${rx} ${ry} 0 0 0 ${rx * 2} 0 ` +
+          `C ${cx + rx} ${40} ${cx + 4} ${48} ${cx + 4} ${bot} L ${cx - 4} ${bot} ` +
+          `C ${cx - 4} ${48} ${cx - rx} ${40} ${cx - rx} ${topY} Z`;
+        return Object.assign(GLASSES.stem(bowl, clip, topY, bot, rx), { fill: 0.82 });
+      }
+      case "white_wine": {
+        const cx = 50, topY = 20, bot = 58, rx = 20, ry = 5;
+        const bowl = [
+          ellipse(cx, topY, rx, ry),
+          `M ${cx - rx} ${topY} C ${cx - 24} ${40} ${cx - 15} ${52} ${cx - 10} ${bot}`,
+          `M ${cx + rx} ${topY} C ${cx + 24} ${40} ${cx + 15} ${52} ${cx + 10} ${bot}`,
+          `M ${cx - 10} ${bot} Q ${cx} ${bot + 3} ${cx + 10} ${bot}`,
+        ];
+        const clip = `M ${cx - rx} ${topY} a ${rx} ${ry} 0 0 0 ${rx * 2} 0 ` +
+          `C ${cx + 24} ${40} ${cx + 15} ${52} ${cx + 10} ${bot} Q ${cx} ${bot + 3} ${cx - 10} ${bot} ` +
+          `C ${cx - 15} ${52} ${cx - 24} ${40} ${cx - rx} ${topY} Z`;
+        return Object.assign(GLASSES.stem(bowl, clip, topY, bot, rx), { fill: 0.78 });
+      }
+      default:
+        return Object.assign(GLASSES.cylinder(32, 30, 26, 80, 6), { fill: 0.72 });
+    }
+  }
+
+  const SVGNS = "http://www.w3.org/2000/svg";
+  function svgEl(name, attrs) {
+    const el = document.createElementNS(SVGNS, name);
+    for (const k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+
+  function renderGlass(glassKind, transform, liquidColor) {
+    const g = glassGeometry(glassKind);
+    const svg = svgEl("svg", { viewBox: "0 0 100 100", class: "glass-svg" });
+    const clipId = "clip-" + Math.floor(g.top * 1000 + g.bottom);
+
+    // liquid clipped to the interior
+    const defs = svgEl("defs", {});
+    const cp = svgEl("clipPath", { id: clipId });
+    cp.appendChild(svgEl("path", { d: g.clip }));
+    defs.appendChild(cp);
+    svg.appendChild(defs);
+
+    const surfaceY = g.bottom - (g.bottom - g.top) * g.fill;
+    // offset/inset transform: nudge the liquid the way the app does.
+    let dx = 0;
+    if (transform === "offset_left") dx = -4;
+    else if (transform === "offset_right") dx = 4;
+
+    const liquidGroup = svgEl("g", { "clip-path": `url(#${clipId})` });
+    liquidGroup.appendChild(svgEl("rect", {
+      x: 0, y: surfaceY, width: 100, height: 100 - surfaceY,
+      transform: `translate(${dx} 0)`,
+      fill: "var(--liquid)", "fill-opacity": "0.85",
+    }));
+    svg.appendChild(liquidGroup);
+    svg.style.setProperty("--liquid", liquidColor);
+
+    // glass outline on top
+    for (const d of g.outline) {
+      svg.appendChild(svgEl("path", {
+        d: d, fill: "none", stroke: "var(--stroke)",
+        "stroke-width": "1.6", "stroke-linecap": "round", "stroke-linejoin": "round",
+      }));
+    }
+    return svg;
+  }
+
+  // ---- Directions: split into numbered steps like InstructionBuilder ----
+  function directionSteps(directions) {
+    return directions
+      .split(/\n|(?<=[.!?])\s+(?=[A-Z0-9])/)
+      .map(s => s.trim())
+      .filter(Boolean);
+  }
+
+  // ---- Render the recipe summary ----
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function attributeText(comp) {
+    const a = [];
+    if (comp.garnish) a.push("garnish");
+    if (comp.optional) a.push("optional");
+    return a.join(", ");
+  }
+
+  function ingredientRow(comp) {
+    const row = el("div", "ingredient-row");
+    const left = el("div", "ingredient-left");
+    const measure = el("span", "measure");
+    const amt = amountString(comp.amount);
+    if (amt) measure.appendChild(el("span", "amount", amt));
+    if (comp.unit) measure.appendChild(el("span", "unit", comp.unit));
+    left.appendChild(measure);
+    left.appendChild(el("span", "label", comp.name));
+    row.appendChild(left);
+    const attr = attributeText(comp);
+    if (attr) row.appendChild(el("span", "attribute", attr));
+    return { row, alts: comp.alts };
+  }
+
+  function render(drink, root) {
+    root.textContent = "";
+    root.style.setProperty("--liquid", "var(--accent-" + drink.liquidColor + ")");
+
+    const summary = el("div", "recipe-summary");
+
+    // hero: glass on a liquid-tinted glass card
+    const hero = el("div", "hero-card");
+    hero.style.setProperty(
+      "--tint", "var(--accent-" + drink.liquidColor + ")");
+    hero.appendChild(renderGlass(drink.glass, drink.transform,
+      "var(--accent-" + drink.liquidColor + ")"));
+    summary.appendChild(hero);
+
+    const titleWrap = el("div", "title-wrap");
+    titleWrap.appendChild(el("h1", "drink-name", drink.name));
+    titleWrap.appendChild(el("div", "subtitle", "Shared recipe"));
+    summary.appendChild(titleWrap);
+
+    const ingredients = el("div", "ingredients");
+    for (const comp of drink.components) {
+      const { row, alts } = ingredientRow(comp);
+      ingredients.appendChild(row);
+      for (const alt of alts) {
+        const a = ingredientRow(alt).row;
+        a.classList.add("alt-row");
+        const label = a.querySelector(".label");
+        if (label) label.textContent = "or " + label.textContent;
+        ingredients.appendChild(a);
+      }
+    }
+    summary.appendChild(ingredients);
+
+    const steps = directionSteps(drink.directions);
+    if (steps.length) {
+      summary.appendChild(el("hr", "hard-divider"));
+      const dir = el("div", "directions");
+      dir.appendChild(el("h2", "directions-title", "Directions"));
+      const ol = el("ol", "steps");
+      for (const s of steps) {
+        const li = el("li", "step");
+        li.appendChild(el("span", "step-text", s));
+        ol.appendChild(li);
+      }
+      dir.appendChild(ol);
+      summary.appendChild(dir);
+    }
+
+    root.appendChild(summary);
+  }
+
+  function showError(root, msg) {
+    root.textContent = "";
+    const box = el("div", "error-box");
+    box.appendChild(el("div", "error-glass", "\u{1F378}"));
+    box.appendChild(el("h1", "error-title", "Couldn't read this recipe"));
+    box.appendChild(el("p", "error-msg", msg));
+    root.appendChild(box);
+  }
+
+  // ---- Boot ----
+  async function boot() {
+    const root = document.getElementById("app");
+    const cta = document.getElementById("open-app");
+
+    // token from ?d=, or a pasted martini://add-drink?d=… URL
+    const params = new URLSearchParams(location.search);
+    let token = params.get("d");
+    if (!token && location.hash) {
+      const h = new URLSearchParams(location.hash.replace(/^#/, ""));
+      token = h.get("d");
+    }
+    if (!token) {
+      showError(root, "No recipe data in this link. A Martini QR code links to " +
+        "an address ending in “?d=…”.");
+      return;
+    }
+
+    // Wire the "Open in Martini" deep link to the same payload.
+    if (cta) cta.href = "martini://add-drink?d=" + encodeURIComponent(token);
+
+    let archive;
+    try {
+      archive = bytesFromB64url(token);
+    } catch (e) {
+      showError(root, "This link's recipe data is malformed.");
+      return;
+    }
+    if (archive.length < 2) { showError(root, "This link's recipe data is too short."); return; }
+    if (archive[0] !== FORMAT_VERSION) {
+      showError(root, "This recipe was made with a newer version of Martini.");
+      return;
+    }
+    if (archive[1] !== DICT_VERSION) {
+      showError(root, "This recipe was made with a newer version of Martini.");
+      return;
+    }
+
+    try {
+      const loadBytes = async (u) => {
+        const r = await fetch(u);
+        if (!r.ok) throw new Error("failed to load " + u);
+        return new Uint8Array(await r.arrayBuffer());
+      };
+      const [wasm, dict] = await Promise.all([
+        loadBytes("/zstd.wasm"),
+        loadBytes("/martini-dict.bin"),
+      ]);
+      await window.MartiniZstd.init(wasm);
+      const dctx = window.MartiniZstd.createDCtx();
+      const tlv = window.MartiniZstd.decompressUsingDict(dctx, archive.subarray(2), dict);
+      window.MartiniZstd.freeDCtx(dctx);
+      const drink = decodeTLV(tlv);
+      document.title = drink.name + " · Martini";
+      render(drink, root);
+    } catch (e) {
+      showError(root, "This recipe couldn't be decoded (" + (e && e.message || e) + ").");
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+
+  // exposed for tests
+  window.__martiniDecodeTLV = decodeTLV;
+  window.__martiniAmountString = amountString;
+})();
+</script>
+</body>
+</html>
