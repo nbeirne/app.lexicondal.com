@@ -4,7 +4,7 @@
       {
         "appIDs": ["TEAMID.xyz.hydrus.cocktail"],
         "components": [
-          { "/": "/add-drink*", "comment": "Shared drink recipe: opens the Martini app if installed" }
+          { "/": "/a", "comment": "Shared drink recipe: opens the Martini app if installed" }
         ]
       }
     ]
